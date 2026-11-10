@@ -1,0 +1,536 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Mengunci layar agar tidak scroll sama sekali */
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", sans-serif;
+  background-color: #151518;
+  color: #e4e4e9;
+  user-select: none;
+}
+
+/* App Container Layout - Terkunci 100vh */
+.app-container {
+  display: flex;
+  height: 100vh;
+  height: 100dvh;
+  width: 100vw;
+  background: #141417;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100vh;
+  height: 100dvh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Top Bar */
+.topbar {
+  height: 52px;
+  background: #1c1c22;
+  border-bottom: 1px solid #2a2a34;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.toggle-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #272730;
+  color: #d4af37;
+  border: 1px solid #3d3d4b;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.toggle-nav-btn:hover {
+  background: #333340;
+  border-color: #d4af37;
+  color: #ffde6a;
+}
+
+.doc-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0f0f5;
+  letter-spacing: 0.5px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-page-info {
+  font-size: 12px;
+  color: #a0a0b0;
+  background: #24242c;
+  padding: 4px 10px;
+  border-radius: 12px;
+  border: 1px solid #33333f;
+}
+
+/* Viewer & Flipbook - Tetap di posisi tengah tanpa bisa ter-scroll */
+.viewer {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px 14px 16px;
+  gap: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.book-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100vh - 130px);
+  width: 100%;
+  overflow: hidden;
+}
+
+.page {
+  background: #fff;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+}
+
+.page img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Controls Bar */
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: #eee;
+  background: #1c1c22;
+  padding: 8px 16px;
+  border-radius: 30px;
+  border: 1px solid #2e2e38;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  flex-shrink: 0;
+  z-index: 5;
+}
+
+.controls button {
+  background: #2b2b36;
+  color: #f0f0f5;
+  border: 1px solid #3d3d4e;
+  border-radius: 20px;
+  padding: 6px 14px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.controls button:hover {
+  background: #3c3c4c;
+  border-color: #d4af37;
+  color: #ffde6a;
+}
+
+.controls .page-counter {
+  font-size: 13px;
+  font-weight: 500;
+  color: #c7c7d4;
+  padding: 0 6px;
+  min-width: 75px;
+  text-align: center;
+}
+
+.controls input {
+  background: #262630;
+  color: #eee;
+  border: 1px solid #3d3d4e;
+  border-radius: 6px;
+  padding: 5px 8px;
+  width: 65px;
+  font-size: 13px;
+  text-align: center;
+  cursor: text;
+}
+
+.controls input:focus {
+  outline: none;
+  border-color: #d4af37;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2);
+}
+
+/* ========================================================
+   NAVIGATION SIDEBAR PANEL (HANYA INI YANG DAPAT DI-SCROLL)
+   ======================================================== */
+.nav-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(2px);
+  z-index: 90;
+}
+
+.nav-panel {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  height: 100dvh;
+  width: 440px;
+  max-width: 90vw;
+  background: #1a1a20;
+  border-right: 1px solid #2b2b36;
+  display: flex;
+  flex-direction: column;
+  z-index: 100;
+  transform: translateX(-100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.45);
+  overflow: hidden;
+}
+
+.nav-panel.open {
+  transform: translateX(0);
+}
+
+/* Responsive Desktop Push Layout: tetap terkunci 100vh */
+@media (min-width: 1280px) {
+  .app-container.nav-expanded .nav-panel {
+    position: relative;
+    height: 100vh;
+    height: 100dvh;
+    box-shadow: none;
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 1279px) {
+  .nav-backdrop {
+    display: block;
+  }
+}
+
+/* Nav Header - Diam di tempat (tidak ikut scroll) */
+.nav-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #292934;
+  background: #17171d;
+  flex-shrink: 0;
+}
+
+.nav-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nav-icon {
+  width: 20px;
+  height: 20px;
+  color: #d4af37;
+}
+
+.nav-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #f2f2f8;
+  letter-spacing: 0.3px;
+}
+
+.nav-close-btn {
+  background: transparent;
+  border: none;
+  color: #9292a4;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.nav-close-btn:hover {
+  background: #2b2b36;
+  color: #fff;
+}
+
+/* Search Bar - Diam di tempat (tidak ikut scroll) */
+.nav-search-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  background: #17171d;
+  border-bottom: 1px solid #262630;
+  flex-shrink: 0;
+}
+
+.search-icon {
+  position: absolute;
+  left: 30px;
+  color: #79798c;
+  pointer-events: none;
+}
+
+.nav-search-input {
+  width: 100%;
+  background: #23232c;
+  border: 1px solid #333342;
+  border-radius: 8px;
+  padding: 9px 36px 9px 38px;
+  color: #eee;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.nav-search-input:focus {
+  outline: none;
+  border-color: #d4af37;
+  background: #282834;
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 26px;
+  background: transparent;
+  border: none;
+  color: #858599;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 2px 6px;
+}
+
+.clear-search-btn:hover {
+  color: #fff;
+}
+
+/* Tabs - Diam di tempat (tidak ikut scroll) */
+.nav-tabs {
+  display: flex;
+  padding: 10px 14px;
+  background: #1a1a20;
+  gap: 10px;
+  border-bottom: 1px solid #262630;
+  flex-shrink: 0;
+}
+
+.nav-tab {
+  flex: 1;
+  background: #22222b;
+  color: #9d9db0;
+  border: 1px solid #2d2d3a;
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.nav-tab.active {
+  background: #2f2b20;
+  color: #f5cf53;
+  border-color: #d4af37;
+  font-weight: 600;
+}
+
+.nav-tab:hover:not(.active) {
+  background: #282834;
+  color: #d5d5e2;
+}
+
+/* Nav Content & List - HANYA AREA INI YANG DAPAT DI-SCROLL */
+.nav-content {
+  flex: 1;
+  min-height: 0; /* Sangat krusial agar overflow scroll berfungsi */
+  overflow-y: auto;
+  overscroll-behavior: contain; /* Mengunci scroll agar tidak tembus ke halaman */
+  padding: 12px 10px 30px 10px;
+}
+
+/* Custom Scrollbar Khusus Navigasi */
+.nav-content::-webkit-scrollbar {
+  width: 6px;
+}
+.nav-content::-webkit-scrollbar-track {
+  background: #17171d;
+}
+.nav-content::-webkit-scrollbar-thumb {
+  background: #363645;
+  border-radius: 4px;
+}
+.nav-content::-webkit-scrollbar-thumb:hover {
+  background: #d4af37;
+}
+
+.outline-group {
+  margin-bottom: 2px;
+}
+
+.outline-item {
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+  font-size: 14px;
+  gap: 10px;
+  border-left: 3px solid transparent;
+}
+
+.outline-item:hover {
+  background: #252530;
+}
+
+.outline-item.active {
+  background: #2c2921;
+  border-left-color: #d4af37;
+}
+
+.outline-item.active .item-title {
+  color: #ffd86b;
+  font-weight: 600;
+}
+
+.outline-item.level-1 {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: #ececf5;
+  line-height: 1.45;
+}
+
+.outline-item.level-2 {
+  padding-left: 36px;
+  font-size: 13.5px;
+  color: #b5b5c5;
+  line-height: 1.45;
+}
+
+.outline-item.level-2:hover .item-title {
+  color: #fff;
+}
+
+.outline-item.level-table {
+  color: #d0d0df;
+  font-size: 13.5px;
+  padding: 9px 12px;
+  line-height: 1.4;
+}
+
+.expand-btn {
+  background: transparent;
+  border: none;
+  color: #8e8ea2;
+  cursor: pointer;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+}
+
+.expand-btn:hover {
+  color: #d4af37;
+}
+
+.chevron {
+  transition: transform 0.2s ease;
+}
+
+.chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.expand-placeholder {
+  width: 16px;
+  display: inline-block;
+}
+
+.child-bullet {
+  color: #727284;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.table-icon {
+  font-size: 15px;
+}
+
+.item-title {
+  flex: 1;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.item-page {
+  font-size: 12px;
+  font-weight: 600;
+  color: #d4af37;
+  background: #2a2822;
+  border: 1px solid #4a4128;
+  padding: 3px 9px;
+  border-radius: 12px;
+  white-space: nowrap;
+}
+
+.section-header {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #d4af37;
+  padding: 14px 12px 6px 12px;
+}
+
+.nav-empty,
+.nav-empty-sub {
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #79798e;
+}
